@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+}
+
+enum BrandCategory {
+  MAKEUP
+  HAIR
+  PERFUME
+  SKINCARE
+  OTHER
+}
+
+model User {
+  id       String   @id @default(uuid())
+  name     String
+  email    String   @unique
+  password String
+  role     UserRole @default(MANAGER)
+
+  brands Brand[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("user")
+}
+
+model Brand {
+  id       String        @id @default(uuid())
+  name     String
+  category BrandCategory @default(OTHER)
+
+  managerId String
+  manager   User   @relation(fields: [managerId], references: [id])
+
+  products Product[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("brand")
+}
+
+model Product {
+  id       String   @id @default(uuid())
+  name     String
+  article  String?
+  barcode  String?
+  category String?
+  ourPrice Decimal? @map("our_price")
+  ourUrl   String?  @map("our_url")
+
+  brandId String @map("brand_id")
+  brand   Brand  @relation(fields: [brandId], references: [id])
+
+  variants        ProductVariant[]
+  competitorLinks CompetitorLink[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("product")
+}
+
+model ProductVariant {
+  id String @id @default(uuid())
+
+  name   String?
+  size   String?
+  volume String?
+  color  String?
+
+  sku     String?
+  barcode String?
+
+  ourPrice Decimal?
+  ourUrl   String?
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  competitorLinks CompetitorLink[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CompetitorLink {
+  id                    String    @id @default(uuid())
+  competitorName        String    @map("competitor_name")
+  competitorProductName String?   @map("competitor_product_name")
+  url                   String
+  isActive              Boolean   @default(true) @map("is_active")
+  lastCheckedAt         DateTime? @map("last_checked_at")
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  productVariantId String?
+  productVariant   ProductVariant? @relation(fields: [productVariantId], references: [id])
+
+  priceHistory PriceHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("competitor_link")
+}
+
+model PriceHistory {
+  id String @id @default(uuid())
+
+  price           Decimal?
+  oldPrice        Decimal? @map("old_price")
+  discountPercent Float?   @map("discount_percent")
+
+  pageStatus String @map("page_status")
+
+  checkedAt DateTime @default(now()) @map("checked_at")
+
+  competitorLinkId String
+  competitorLink   CompetitorLink @relation(fields: [competitorLinkId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("price_history")
+}
