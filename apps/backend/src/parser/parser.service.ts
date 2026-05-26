@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { chromium } from 'playwright';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { extractPrice } from './helpers/extract-price.js';
 
 @Injectable()
 export class ParserService {
@@ -31,10 +32,14 @@ export class ParserService {
 
       const title = await page.title();
 
+      const bodyText = await page.locator("body").innerText()
+
+      cosnt price = extractPrice(bodyText)
+
       await this.prisma.priceHistory.create({
         data: {
           competitorLinkId: competitorLink.id,
-          price: null,
+          price: price,
           oldPrice: null,
           discountPercent: null,
           pageStatus: 'ACTIVE',
