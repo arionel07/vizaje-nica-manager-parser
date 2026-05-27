@@ -31,6 +31,9 @@ export class ParserService {
       });
 
       const title = await page.title();
+      const bodyText = await page.locator('body').innerText();
+
+      const price = extractPrice(bodyText);
 
       const bodyText = await page.locator("body").innerText()
 
